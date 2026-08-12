@@ -1,0 +1,474 @@
+\documentclass{article}
+\usepackage{iclr2027_conference,times}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{float}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\E}{\mathbb E}
+\newcommand{\cH}{\mathcal H_k}
+\newcommand{\cS}{\mathcal S}
+\newcommand{\cA}{\mathcal A}
+\newcommand{\cZ}{\mathcal Z}
+\newcommand{\Bpos}{\mathfrak B_{+}}
+\newcommand{\Bsgn}{\mathfrak B_{\pm}}
+\newcommand{\Vrkhs}{\mathfrak V}
+\newcommand{\Crkhs}{\mathfrak C}
+\DeclareMathOperator{\supp}{supp}
+
+\title{Cloned States, Linear Regret:\\A Representation-Invariant Theory of Kernel MDPs}
+\author{\textbf{Pahan Dewasurendra} \\ Johns Hopkins University}
+
+\hypersetup{pdftitle={Cloned States, Linear Regret: A Representation-Invariant Theory of Kernel MDPs},pdfauthor={Pahan Dewasurendra},pdfkeywords={kernel reinforcement learning, Markov decision processes, information gain, regret lower bounds, RKHS, representation invariance},pdfsubject={preprint}}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A common kernel-MDP assumption requires every scalar transition slice
+$z\mapsto P_h(s'\mid z)$ to have bounded norm in a state-action RKHS. We show
+that this condition measures the names assigned to next states, not the decision
+problem. Replacing a state by $m$ behaviorally identical clones divides every
+associated slice norm by $m$, while preserving all policy values, every learning
+algorithm's attainable observation laws, minimax regret, and the kernel's maximum
+information gain. More strongly, we construct a fixed two-step MDP domain and a
+fixed Mat\'ern kernel with sublinear information gain for which the coordinatewise
+condition, with any prescribed constant, permits linear minimax regret. This gives
+a negative answer to the COLT 2024 no-regret open problem under its stated
+assumption. We then introduce the \emph{Bellman radius}, the operator norm of the
+transition kernel from bounded values to the state-action RKHS. It is invariant to
+state cloning, is the exact constant needed for Bellman closure, and is equivalent
+up to a factor two to the semivariation of an RKHS-valued transition measure.
+An integrable RKHS norm of a transition density is a verifiable stronger condition.
+It exposes the missing state-volume factor in the frequently cited coordinatewise
+argument. These results separate valid Bellman-closure and conditional-embedding
+theorems from representation-dependent sufficient conditions, and give a drop-in
+premise for future kernel RL guarantees.
+\end{abstract}
+
+\section{Introduction}
+
+Kernel methods offer a natural route from linear reinforcement learning to nonlinear
+function approximation. A widely used model assumes that for every next state $s'$,
+the scalar function $z\mapsto P_h(s'\mid z)$ belongs to the unit ball of a known
+reproducing kernel Hilbert space (RKHS) on state-action pairs
+\citep{yang2020kernel,yeh2023sample,vakili2023kernel,
+vakili2024rewardfree,vakili2024average,kayal2025rewardfree}.
+The intended consequence is that every Bellman image
+\begin{equation}
+  [P_hV](z)=\int_{\cS}V(s')P_h(ds'\mid z)
+  \label{eq:bellman-image}
+\end{equation}
+also has controlled RKHS norm. Kernel ridge confidence sets can then be applied to
+the moving value targets produced by value iteration.
+
+There is a basic obstruction. Split one next-state label into $m$ labels with the
+same reward and future dynamics, and allocate one $m$th of its probability to each.
+The agent has not received a new control problem. It only observes an independent
+uniform label after the transition. Yet all $m$ scalar probability functions now
+have one $m$th of the original norm. This operation can make the coordinate bound
+arbitrarily small without making learning easier.
+
+The issue is not merely aesthetic. We use state cloning to encode an unrestricted
+smooth continuum-armed bandit inside transition probabilities whose individual
+RKHS norms are arbitrarily small. The construction uses one fixed countable state
+space and one fixed Mat\'ern kernel. Its maximum information gain is sublinear, but
+its minimax regret is linear. Thus the coordinatewise premise in the kernel-RL open
+problem of \citet{vakili2024open} cannot by itself support no-regret learning.
+
+The right object is already implicit in Bellman's equation. We define
+\begin{equation}
+ \Bpos(P;\cH)=
+ \sup_{V:\,0\leq V\leq1}\|PV\|_{\cH}.
+ \label{eq:bellman-radius-intro}
+\end{equation}
+This \emph{Bellman radius} is unchanged by cloning and is exactly the smallest
+constant controlling every bounded nonnegative value image. For discrete states,
+its signed counterpart is the semivariation of the RKHS-valued measure
+$A\mapsto P(A\mid\cdot)$. For transition densities $p(s'\mid\cdot)$ relative to a
+reference measure $\mu$, the stronger quantity
+$\int\|p(s'\mid\cdot)\|_{\cH}\,d\mu(s')$ controls the radius. Unlike a pointwise
+density bound, this integral retains the state-volume factor and is invariant to a
+change of density convention.
+
+\paragraph{Contributions.}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+  \item We prove an exact state-refinement theorem. State cloning preserves the
+  entire projected learning experiment, minimax regret, and maximum information
+  gain, while coordinate transition norms decrease by arbitrary factors.
+  \item We prove a linear minimax-regret lower bound under the stated assumption of
+  \citet{vakili2024open}. The state space, reward, and Mat\'ern kernel are fixed,
+  and the kernel has $o(T)$ information gain.
+  \item We characterize a representation-invariant replacement through the Bellman
+  radius, semivariation, and transition-density variation. The hierarchy gives exact
+  Bellman closure and clarifies when coordinate assumptions can be repaired.
+  \item We audit the proof-level consequence across kernel-RL results from 2020 to
+  2026. Direct Bellman-closure, smooth-Bellman, and bounded conditional-embedding
+  results remain intact. Claims that derive closure from coordinate slices require a
+  cardinality, volume, or operator-radius term.
+\end{itemize}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\small,>=Latex,node distance=7mm and 13mm]
+ \node[draw,rounded corners,minimum width=29mm,minimum height=11mm] (x)
+ {$z$};
+ \node[draw,rounded corners,right=of x,minimum width=27mm,minimum height=11mm] (y)
+ {$s'$ with mass $p(z)$};
+ \draw[->,very thick] (x) -- node[above] {$p(z)$} (y);
+ \node[below=10mm of x,draw,rounded corners,minimum width=29mm,minimum height=11mm] (xc)
+ {$z$};
+ \node[right=of xc,inner sep=0] (clones) {\begin{tabular}{c}
+ $s'_1$ with $p(z)/m$\\[-1mm] $\vdots$\\[-1mm] $s'_m$ with $p(z)/m$
+ \end{tabular}};
+ \draw[->,very thick] (xc) -- (clones);
+ \draw[->,dashed,thick] (y.south) -- node[right,align=left] {refine label\\only} (clones.north);
+ \node[right=18mm of y,align=left] (facts) {
+ $\Crkhs:\ \|p\|\mapsto\|p\|/m$\\
+ $\Bpos:\ \text{unchanged}$\\
+ values, regret, $\gamma_T:\ \text{unchanged}$};
+\end{tikzpicture}
+\caption{State cloning changes a coordinatewise RKHS parameter without changing
+the learning problem. Clone indices are independent random labels.}
+\label{fig:cloning}
+\end{figure}
+
+\section{Coordinate norms are not properties of an MDP}
+\label{sec:cloning}
+
+Let $P$ be a Markov kernel from a current state-action domain $\cZ$ to a finite or
+countable next-state space $\cS$. Let $k$ be a kernel on $\cZ$ with RKHS $\cH$.
+Write $p_y=P(\{y\}\mid\cdot)$ and define the coordinate radius
+\begin{equation}
+ \Crkhs(P;\cH)=\sup_{y\in\cS}\|p_y\|_{\cH}.
+ \label{eq:coordinate-radius}
+\end{equation}
+This is the premise in \citet{vakili2024open}, up to a constant $u$.
+
+Choose integers $m_y\geq1$. The refined state space is
+$\widetilde\cS=\{(y,i):y\in\cS,\ i\in[m_y]\}$ and the refined transition is
+\begin{equation}
+ \widetilde P((y,i)\mid z)=\frac{P(y\mid z)}{m_y}.
+ \label{eq:clone-transition}
+\end{equation}
+For a full MDP, rewards and future transitions are constant within each fiber.
+If current states are also refined, use the pulled-back kernel
+$\widetilde k((s,i,a),(s',j,a'))=k((s,a),(s',a'))$.
+
+\begin{theorem}[Exact state refinement]
+\label{thm:refinement}
+For any episodic MDP and any finite clone counts, the refined MDP has the following
+properties. The regret statement applies to any model family and its paired family
+of refinements.
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
+ \item Projection of a refined trajectory onto original state labels has the
+ original trajectory law. Conversely, every policy using clone labels can be
+ simulated in the original MDP using private randomization. Hence paired policies
+ have identical value and regret laws, and paired model families have the same
+ minimax regret for every number of episodes.
+ \item The pulled-back RKHS is isometric to the original RKHS and
+ \begin{equation}
+   \Crkhs(\widetilde P;\widetilde\cH)
+   =\sup_{y\in\cS}\frac{\|p_y\|_{\cH}}{m_y}.
+   \label{eq:coordinate-shrink}
+ \end{equation}
+ \item For every regularization $\lambda>0$ and budget $T$, the maximum information
+ gain satisfies $\gamma_T(\widetilde k;\lambda)=\gamma_T(k;\lambda)$.
+\end{enumerate}
+\end{theorem}
+
+The proof couples clone indices as independent uniforms and observes that every
+refined Gram matrix equals the Gram matrix of its projection. Full details, including
+history-dependent randomized policies, are in Appendix~\ref{app:refinement}.
+The result is an exact bisimulation-style refinement
+\citep{givan2003equivalence}, strengthened here to equality of the sequential
+learning experiments and kernel complexity.
+
+\begin{corollary}[Vacuity under finite refinement]
+\label{cor:vacuity}
+Let a finite MDP have a finite state-action domain and let $k$ be strictly positive
+definite on that domain. For every $\epsilon>0$, there is a behaviorally equivalent
+refinement with a pulled-back kernel satisfying
+$\Crkhs(\widetilde P_h;\widetilde\cH)\leq\epsilon$ for every stage $h$. Rewards keep
+their RKHS norms and every $\gamma_T$ is unchanged.
+\end{corollary}
+
+Every function on a finite domain belongs to the RKHS of a strictly positive
+definite Gram matrix. Choosing $m_y$ large enough proves the corollary. Therefore a
+uniform coordinate bound can certify every finite decision problem after harmless
+state refinement. The next result rules out the objection that the pulled-back
+kernel is responsible.
+
+\section{A fixed Mat\'ern kernel still permits linear regret}
+\label{sec:lower}
+
+We consider the online episodic setting of \citet{vakili2024open}. Rewards are
+deterministic and known, transitions are unknown, and regret after $T$ episodes is
+$R_T=\sum_{t=1}^T(V_1^*-V_1^{\pi_t})$. The assumption is that a known kernel $k$
+satisfies $\|P_h(s'\mid\cdot)\|_{\cH}\leq u$ for every $h$ and $s'$, where $u>0$
+is fixed.
+
+\begin{theorem}[No uniform no-regret under coordinate smoothness]
+\label{thm:linear}
+Fix any $u>0$ and any Mat\'ern smoothness $\nu>1/2$. There exist a fixed compact
+state-action domain $\cZ$, a fixed countable state space, a fixed known reward, and
+the restriction to $\cZ$ of a unit-variance Mat\'ern kernel on $[0,1]^2$ such that
+\begin{equation}
+ \inf_{\mathsf A}\ \sup_{M:\,\Crkhs(P_h;\cH)\leq u}
+ \E_M[R_T(\mathsf A)]\ \geq c_\nu T
+ \qquad\text{for every }T\geq2,
+ \label{eq:linear-regret}
+\end{equation}
+where $c_\nu>0$ does not depend on $T$. At the same time,
+$\gamma_T(k;1)=\widetilde O(T^{2/(2\nu+2)})=o(T)$.
+The claim already holds for horizon two.
+\end{theorem}
+
+\paragraph{Construction and proof idea.}
+At the first stage there is one state and the action is $x\in[0,1]$. Terminal
+states are fixed labels $\{g_n,b_n:n\in\N\}$, with known rewards $\alpha$ and zero.
+For $M=2T$, place smooth unit-height bumps $\psi_1,\ldots,\psi_M$ on disjoint
+intervals. Instance $j$ has total probability
+\begin{equation}
+ f_j(x)=\tfrac12+\Delta\psi_j(x)
+ \label{eq:bump-mean}
+\end{equation}
+of reaching a good state. Spread this mass uniformly across $N_T$ good labels and
+the complementary mass across $N_T$ bad labels. Each scalar transition function is
+therefore $f_j/N_T$ or $(1-f_j)/N_T$. Smooth compactly supported functions belong
+to every finite-smoothness Mat\'ern RKHS on a compact domain
+\citep{wendland2005scattered,kanagawa2018review}. A finite $N_T$ can consequently
+make every slice norm at most $u$, even though the Bellman image remains
+$\alpha f_j$.
+
+Under the flat instance $f_0=1/2$, a length-$T$ action sequence can enter at most
+$T$ of the $2T$ disjoint supports. A uniformly random support is never entered with
+probability at least $1/2$. Until entry, the complete labeled observation history
+has the same distribution under $f_j$ and $f_0$. Hence some $j$ is never entered
+with probability at least $1/2$ under its own instance. On that event all $T$
+actions have gap $\alpha\Delta$, proving
+$\E R_T\geq\alpha\Delta T/2$. Appendix~\ref{app:lower} gives the formal coupling,
+one common Mat\'ern-domain embedding for all stages, and the randomized-algorithm
+argument. The standard Mat\'ern information-gain bound gives the final claim
+\citep{vakili2021information,janz2020matern}.
+
+The hard MDP may depend on $T$, as is standard in minimax regret. The state space,
+kernel, reward, horizon, and coordinate constant do not. The number of labels with
+positive transition mass grows with $T$. This is precisely the degree of freedom
+left uncontrolled by the coordinate assumption. Theorem~\ref{thm:linear} gives a
+negative answer to the no-regret part of the COLT 2024 open problem \emph{under its
+stated Assumption 1}. It does not rule out no-regret guarantees under direct Bellman
+closure, a fixed finite cardinality, or smooth transition densities with controlled
+integrated norm.
+
+\section{The representation-invariant quantity}
+\label{sec:radius}
+
+For a transition kernel $P$ whose relevant Bellman images belong to $\cH$, define
+the positive and signed Bellman radii
+\begin{equation}
+ \Bpos(P;\cH)=\sup_{0\leq V\leq1}\|PV\|_{\cH},
+ \qquad
+ \Bsgn(P;\cH)=\sup_{\|V\|_\infty\leq1}\|PV\|_{\cH}.
+ \label{eq:radii}
+\end{equation}
+For countable states, also define the RKHS slice variation
+\begin{equation}
+ \Vrkhs(P;\cH)=\sum_{y\in\cS}\|p_y\|_{\cH}.
+ \label{eq:variation}
+\end{equation}
+
+\begin{theorem}[Radius hierarchy and invariance]
+\label{thm:radius}
+Whenever the quantities are finite,
+\begin{equation}
+ \Crkhs(P;\cH)\leq\Bpos(P;\cH)
+ \leq\Bsgn(P;\cH)\leq2\Bpos(P;\cH)
+ \leq2\Vrkhs(P;\cH).
+ \label{eq:hierarchy}
+\end{equation}
+Both Bellman radii and the slice variation are exactly invariant under arbitrary
+state-dependent cloning. The positive radius is the smallest $B$ such that
+$\|PV\|_{\cH}\leq B\|V\|_\infty$ for every nonnegative bounded $V$. The signed
+radius is the semivariation of the $\cH$-valued transition measure
+$A\mapsto P(A\mid\cdot)$ whenever this set function is countably additive in
+$\cH$ \citep{diestel1977vector}.
+No reverse inequality in equation~\eqref{eq:hierarchy} is dimension free.
+\end{theorem}
+
+The invariance proof is exact. For a function $\widetilde V$ on clones, let
+$\bar V(y)=m_y^{-1}\sum_i\widetilde V(y,i)$. Then
+$\widetilde P\widetilde V=P\bar V$, and every $V$ has a constant-on-fibers lift.
+The variation identity follows by summing $m_y$ copies of
+$\|p_y/m_y\|_{\cH}$. The factor-two equivalence uses
+$V=V_+-V_-$ for signed $V$. Examples in Appendix~\ref{app:radius} show strict
+separations of order $n$ and $\sqrt n$ between the three quantities.
+
+The hierarchy also clarifies transition densities. Suppose
+$P(ds'\mid z)=p(s'\mid z)\mu(ds')$ and
+$s'\mapsto p(s'\mid\cdot)$ is Bochner integrable in $\cH$.
+
+\begin{proposition}[Density variation]
+\label{prop:density}
+Define
+\begin{equation}
+ \Vrkhs_\mu(P;\cH)=
+ \int_{\cS}\|p(s'\mid\cdot)\|_{\cH}\,d\mu(s').
+ \label{eq:density-variation}
+\end{equation}
+Then $\Bpos(P;\cH)\leq\Vrkhs_\mu(P;\cH)$. If
+$\|p(s'\mid\cdot)\|_{\cH}\leq u$ pointwise, the valid conclusion is
+$\Bpos(P;\cH)\leq u\mu(\cS)$. The quantity in
+equation~\eqref{eq:density-variation} is unchanged under equivalent changes of
+reference measure and measurable relabelings.
+\end{proposition}
+
+The proof is the Bochner triangle inequality. Under $d\mu'=w,d\mu$, the new
+density is $p'=p/w$, so the integrated norm is unchanged. A pointwise density
+constant alone is therefore incomplete without the reference-measure mass. This
+matches the general $L^\infty\!\to\cH$ conditional-expectation criterion noted by
+\citet{hertel2026regularity}. Their broader operator theory treats $L^p$ domains,
+density regularity, and conditional mean embeddings. Our Bellman radius is the
+exact intrinsic norm for bounded RL value functions.
+
+\begin{corollary}[Exact Bellman closure]
+\label{cor:closure}
+If $\|r_h\|_{\cH}\leq B_r$ and
+$\Bpos(P_h;\cH)\leq B_P$, then for every $V:\cS\to[0,H-h]$,
+\begin{equation}
+ \|r_h+P_hV\|_{\cH}\leq B_r+(H-h)B_P.
+ \label{eq:closure}
+\end{equation}
+Conversely, with $r_h=0$, the smallest uniform constant in
+equation~\eqref{eq:closure} is $(H-h)\Bpos(P_h;\cH)$.
+\end{corollary}
+
+This is the nonlinear analogue of the integrated vector-measure bound imposed in
+linear MDPs \citep{jin2020linear}. It is also the premise actually needed when a
+kernel ridge confidence theorem is applied to Bellman targets. Any proof using
+coordinate smoothness only through this target-norm step can replace it by
+Corollary~\ref{cor:closure}, with the confidence radius scaled by
+$B_r+HB_P$.
+
+\section{What changes in existing kernel RL theory}
+\label{sec:audit}
+
+Table~\ref{tab:audit} separates three assumptions that are often described with
+similar language. They are not equivalent.
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.22\linewidth}
+                >{\raggedright\arraybackslash}p{0.31\linewidth}
+                >{\raggedright\arraybackslash}p{0.39\linewidth}}
+\toprule
+Work & Formal premise or proof step & Consequence of our results \\
+\midrule
+\citet{yang2020kernel}
+& Main theorem assumes bounded Bellman images directly. A separate paragraph says coordinate slices suffice.
+& The theorem under direct closure is unchanged. The stated sufficient condition needs slice variation or a finite volume factor. \\
+\citet{yeh2023sample}
+& Coordinate density norm at most one. Lemma 3 proves $\|PV\|\leq c\|V\|_\infty$, where $c=\int_{\cS}ds'$.
+& The proof correctly retains state volume $c$. Omitting $c$ in later uses is not representation invariant. \\
+\citet{vakili2024rewardfree}
+& Lemma 2.3 invokes the same calculation for values on the Lebesgue unit cube.
+& This normalized specialization is valid because the reference volume is one. \\
+\citet{vakili2023kernel,vakili2024average,vakili2024open}
+& Coordinate masses or densities are bounded, followed by a dimension-free Bellman-target claim.
+& That implication fails on general state spaces. Theorem~\ref{thm:linear} rules out uniform no-regret under the open problem's stated premise. \\
+\citet{kayal2025rewardfree,cioba2026invariances,pavlovic2026preferences}
+& Recent uses cite the same coordinate-to-Bellman implication with an $O(H)$ radius.
+& The hidden constant must include volume, variation, or $\Bpos$. Other parts of the analyses may remain applicable after this replacement. \\
+\citet{maran2024local,maran2024smooth}
+& Smoothness or local linearity is imposed on Bellman images. Appendix F of the latter identifies a separate localization issue in \citet{vakili2023kernel}.
+& These structural premises are clone invariant and are not targeted by our lower bound. \\
+\citet{chowdhury2023cme,kumar2025closure}
+& A bounded conditional mean embedding operator is assumed. The latter work enforces a state-RKHS ball by projection.
+& These are operator-level, representation-invariant alternatives, though they control a specified state-function RKHS rather than all bounded values. \\
+\bottomrule
+\end{tabular}
+\caption{Proof-level audit. ``Unchanged'' refers only to the issue studied here.
+All original auxiliary conditions are still required.}
+\label{tab:audit}
+\end{table}
+
+The most precise source for the frequently cited calculation is
+\citet[Lemma 3]{yeh2023sample}. Its proof integrates the pointwise RKHS norm and
+obtains $c=\int_{\cS}ds'$, exactly as Proposition~\ref{prop:density} predicts.
+For a counting measure, $c=|\cS|$. Under $m$-fold cloning the pointwise coordinate
+norm falls by $m$ and $c$ grows by $m$, leaving the product unchanged. Treating $c$
+as a universal constant removes the compensating term.
+
+There are two clean routes forward. One can assume the Bellman radius directly,
+which is minimal for bounded value iteration. Alternatively, one can verify a
+stronger integrated density or conditional-operator condition. Recent work on
+conditional expectations provides analytic density criteria
+\citep{park2020measure,hertel2026regularity}, while CME-based RL uses a bounded
+operator between chosen RKHSs \citep{chowdhury2023cme,kumar2025closure}. The recent
+projection approach enforces membership in its chosen state-RKHS ball. It does not
+analyze coordinate slices or all bounded value functions. Smooth-MDP analyses impose
+regularity on the Bellman operator itself \citep{maran2024local,maran2024smooth}.
+Kernel smoothing of a transition distribution is another distinct model and does
+not rely on coordinate masses \citep{domingues2021kernel}.
+
+\section{Discussion and limitations}
+
+State representations are rarely canonical. Equivalent states can arise from
+tokenization, redundant simulator variables, duplicated observations, or a refined
+discretization. A structural complexity parameter should not improve merely because
+such labels are duplicated. Coordinatewise probability masses fail this test.
+Pointwise transition \emph{densities} can still be meaningful when a canonical
+reference measure and its volume are part of the model. The distinction must be
+explicit.
+
+Our lower bound is uniform minimax rather than a single fixed instance with linear
+asymptotic regret. It exploits an unbounded number of active clone labels, which is
+allowed by the stated premise. Fixed finite state cardinality restores a factor
+$|\cS|$ and does not contradict tabular learning. We do not propose a new RL
+algorithm, and a small Bellman radius may itself be difficult to verify from data.
+The result instead identifies the weakest norm premise needed by a broad family of
+kernel value-iteration proofs and supplies verifiable stronger conditions.
+
+The conclusion is narrow but consequential. Sublinear kernel information gain
+describes how well fixed RKHS functions can be learned. It cannot guarantee that
+the moving Bellman targets have bounded RKHS norm. That second property belongs to
+the transition operator, not to its individual coordinates.
+
+\subsection*{Ethics statement}
+
+This theoretical work uses no human-subject data and introduces no direct societal
+risk. Its audit of prior claims is phrased at the level of assumptions and proof
+steps. We distinguish unaffected theorems from affected sufficient conditions.
+
+\subsection*{Reproducibility statement}
+
+Appendices~\ref{app:refinement}--\ref{app:checks} contain complete proofs and the
+fixed-domain lower-bound construction. The supplementary artifact verifies cloning
+identities, the radius hierarchy on finite kernels, and the hard-instance coupling
+by exact enumeration. It uses only standard Python and NumPy.
+
+\bibliography{references}
+\bibliographystyle{iclr2027_conference}
+
+\appendix
+\input{appendix}
+
+\end{document}
