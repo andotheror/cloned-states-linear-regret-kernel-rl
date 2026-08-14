@@ -1,0 +1,480 @@
+\section{Notation and technical preliminaries}
+\label{app:prelim}
+
+For an episodic MDP, $h\in[H]$ indexes the stage, $s\in\cS$ the state,
+$a\in\cA$ the action, and $z=(s,a)\in\cZ$. Rewards lie in $[0,1]$.
+Policies and learning algorithms may be randomized and history dependent. The
+kernel $k$ is positive semidefinite and has RKHS $\cH$. Its maximum information
+gain at regularization $\lambda>0$ is
+\begin{equation}
+ \gamma_T(k;\lambda)=
+ \sup_{z_1,\ldots,z_T\in\cZ}
+ \frac12\log\det(I_T+\lambda^{-1}K_T),
+ \qquad [K_T]_{ij}=k(z_i,z_j).
+ \label{eq:gamma-app}
+\end{equation}
+We allow repeated points in the supremum. This convention has no effect on the
+arguments.
+
+We use the following elementary pullback fact.
+
+\begin{lemma}[Pullback RKHS]
+\label{lem:pullback}
+Let $q:\widetilde\cZ\to\cZ$ be surjective and let
+$\widetilde k(\tilde z,\tilde z')=k(q(\tilde z),q(\tilde z'))$. Then
+\begin{equation}
+ \widetilde\cH=\{f\circ q:f\in\cH\},
+ \qquad \|f\circ q\|_{\widetilde\cH}=\|f\|_{\cH}.
+ \label{eq:pullback-isometry}
+\end{equation}
+Also $\gamma_T(\widetilde k;\lambda)=\gamma_T(k;\lambda)$.
+\end{lemma}
+
+\begin{proof}
+If $\phi:\cZ\to\mathcal F$ is a feature map for $k$, then
+$\widetilde\phi=\phi\circ q$ is a feature map for $\widetilde k$. Surjectivity
+means the closed linear spans of $\phi(\cZ)$ and
+$\widetilde\phi(\widetilde\cZ)$ coincide. Their canonical feature-space
+representations therefore give equation~\eqref{eq:pullback-isometry}. Every
+$T$-point Gram matrix in the refined domain is the Gram matrix of its projected
+points. Conversely, every original sequence has a lift because $q$ is surjective.
+The two suprema in equation~\eqref{eq:gamma-app} are equal.
+\end{proof}
+
+\section{Proofs for exact state refinement}
+\label{app:refinement}
+
+We first state the full MDP construction. For clarity, take a layered MDP, so a
+state cannot occur at two different stages. This loses no generality because the
+stage can be appended to the state. For every $s\in\cS_h$, choose a finite integer
+$m_s\geq1$ and let
+\begin{equation}
+ \widetilde\cS_h=\{(s,i):s\in\cS_h,\ i\in[m_s]\}.
+\end{equation}
+If the original initial distribution is $\rho$, set
+$\widetilde\rho(s,i)=\rho(s)/m_s$. Define
+\begin{align}
+ \widetilde r_h((s,i),a)&=r_h(s,a),
+ \label{eq:refined-reward-app}\\
+ \widetilde P_h((s',j)\mid(s,i),a)
+ &=\frac{P_h(s'\mid s,a)}{m_{s'}}.
+ \label{eq:refined-p-app}
+\end{align}
+The projection $q(s,i)=s$ is a probabilistic bisimulation map.
+
+\subsection{Equality of decision and learning experiments}
+
+Given an original policy $\pi$, define its lift by ignoring clone indices. Summing
+equation~\eqref{eq:refined-p-app} over $j$ proves inductively that the projected
+trajectory has the original law. Rewards agree pathwise under projection.
+
+The converse must account for a refined policy that uses clone indices. An agent in
+the original MDP can generate them privately. At the initial state $s_1$, draw
+$I_1$ uniformly from $[m_{s_1}]$. After observing each subsequent original state
+$s_h$, draw $I_h$ independently and uniformly from $[m_{s_h}]$. Feed the synthetic
+history $((s_1,I_1),a_1,\ldots,(s_h,I_h))$ to the refined policy. Conditional on
+the projected history, equation~\eqref{eq:refined-p-app} makes the actual clone
+index in the refined MDP exactly independent and uniform. Induction therefore
+couples the full reward and projected-state laws.
+
+The same simulation applies across episodes and to a learning algorithm whose next
+policy depends on all earlier observations. One direction projects observations.
+The other supplies private clone indices. Thus the sets of attainable reward laws
+are identical. Optimal values are identical as a special case. Since regret is a
+function of the selected-policy values and optimal values, the minimax regret is
+identical for every interaction budget. This proves part 1 of
+Theorem~\ref{thm:refinement}.
+
+\subsection{Coordinate norm and information gain}
+
+At a transition into $s'$, each refined coordinate function is
+\begin{equation}
+ \widetilde p_{s',j}((s,i),a)
+ =\frac{1}{m_{s'}}p_{s'}(s,a).
+\end{equation}
+Lemma~\ref{lem:pullback} and homogeneity of the RKHS norm give
+\begin{equation}
+ \|\widetilde p_{s',j}\|_{\widetilde\cH}
+ =\frac{\|p_{s'}\|_{\cH}}{m_{s'}}.
+\end{equation}
+Taking the supremum proves equation~\eqref{eq:coordinate-shrink}.
+The information-gain claim is Lemma~\ref{lem:pullback}. This completes the proof of
+Theorem~\ref{thm:refinement}.
+
+\subsection{Proof of Corollary~\ref{cor:vacuity}}
+
+On a finite domain, strict positive definiteness means the Gram matrix is
+invertible. Every scalar function $f$ belongs to the RKHS and has finite norm
+$\|f\|_{\cH}^2=f^\top K^{-1}f$. There are finitely many stages and target states.
+Choose
+\begin{equation}
+ m_y\geq\max_h\frac{\|P_h(y\mid\cdot)\|_{\cH}}{\epsilon}
+\end{equation}
+and round upward. Theorem~\ref{thm:refinement} gives the coordinate bound and all
+invariances. A pulled-back reward has the same norm by
+Lemma~\ref{lem:pullback}.
+
+\section{Proof of the linear-regret theorem}
+\label{app:lower}
+
+This section gives one domain and one kernel shared by every interaction budget.
+The additional geometric detail ensures that all transition coordinates, including
+their values on state-action pairs that are unreachable at a given stage, are
+restrictions of Mat\'ern RKHS functions.
+
+\subsection{A fixed compact state-action domain}
+
+Let
+\begin{equation}
+ \cS=\{s_0,g_\infty,b_\infty\}
+ \cup\{g_n,b_n:n\in\N\},
+ \qquad \cA=[0,1].
+\end{equation}
+Assign state coordinates
+\begin{align}
+ \eta(s_0)&=0,\\
+ \eta(g_\infty)&=\tfrac13,
+ &\eta(g_n)&=\tfrac13+\frac{1}{100(n+1)},\\
+ \eta(b_\infty)&=\tfrac23,
+ &\eta(b_n)&=\tfrac23+\frac{1}{100(n+1)}.
+\end{align}
+Embed $z=(s,a)$ as $\iota(z)=(a,\eta(s))\in[0,1]^2$. The image $\iota(\cZ)$
+is compact because both limit-state lines are included. Let $\kappa_\nu$ be the
+unit-variance Mat\'ern kernel of smoothness $\nu>1/2$ on $[0,1]^2$ and define
+\begin{equation}
+ k(z,z')=\kappa_\nu(\iota(z),\iota(z')).
+ \label{eq:matern-pullback}
+\end{equation}
+The embedding is injective, so this is simply the restriction of a fixed Mat\'ern
+kernel to a compact subdomain.
+
+Choose $q\in C^\infty([0,1])$ that equals one on the set of good-state
+coordinates and zero on the initial and bad-state coordinates. Such a function
+exists because these compact sets are separated. The function
+$Q(a,y)=q(y)$ has a smooth compactly supported extension to $\R^2$. Mat\'ern RKHSs
+on bounded Lipschitz domains are norm equivalent to Sobolev spaces of finite order
+\citep{wendland2005scattered,kanagawa2018review}. Hence the restriction of $Q$ to
+$\iota(\cZ)$ has a finite RKHS norm $C_q$. Set
+\begin{equation}
+ \alpha=\min\{1,C_q^{-1}\}>0,
+ \qquad r_1\equiv0,
+ \qquad r_2(s,a)=\alpha q(\eta(s)).
+ \label{eq:fixed-reward}
+\end{equation}
+The reward is fixed, known, in $[0,1]$, and has RKHS norm at most one. This reward
+smoothness is not needed by the open problem, but shows the lower bound survives
+the reward part of the stronger coordinate assumptions used elsewhere.
+
+\subsection{The transition family}
+
+Fix $T\geq2$, set $M=2T$, and choose pairwise disjoint open intervals
+$I_1,\ldots,I_M\subset(0,1)$. Let
+$\psi_j\in C_c^\infty(I_j)$ satisfy $0\leq\psi_j\leq1$ and
+$\max_x\psi_j(x)=1$. Let $\Delta=1/4$.
+
+Choose a smooth cutoff $\chi:[0,1]\to[0,1]$ that equals one at zero and equals
+zero on every good and bad state coordinate. For $j\in[M]$, define the smooth
+ambient functions
+\begin{equation}
+ F_{j,+}(a,y)=\frac12+\Delta\chi(y)\psi_j(a),
+ \qquad
+ F_{j,-}(a,y)=\frac12-\Delta\chi(y)\psi_j(a).
+ \label{eq:ambient-functions}
+\end{equation}
+Their restrictions to $\iota(\cZ)$ have finite $\cH$ norms. Put
+\begin{equation}
+ A_T=\max\left\{
+  \max_{j\in[M],\,\sigma\in\{+,-\}}\|F_{j,\sigma}|_{\iota(\cZ)}\|_{\cH},
+  \tfrac12\|1\|_{\cH}
+ \right\}<\infty
+\end{equation}
+and choose the integer
+\begin{equation}
+ N_T\geq A_T/u.
+ \label{eq:clone-number}
+\end{equation}
+The stage-one transitions of instance $j$ are, for every $z=(s,a)$,
+\begin{align}
+ P_{1,j}(g_n\mid z)&=\frac{F_{j,+}(a,\eta(s))}{N_T},
+ &n&\leq N_T,\label{eq:hard-good}\\
+ P_{1,j}(b_n\mid z)&=\frac{F_{j,-}(a,\eta(s))}{N_T},
+ &n&\leq N_T.\label{eq:hard-bad}
+\end{align}
+All remaining target states have probability zero. The two displayed families sum
+to one and are nonnegative. At stage two, let the transition be independent of
+$z$ and uniform on $\{g_n,b_n:n\leq N_T\}$. These final transitions do not affect
+return, but they make the coordinate assumption valid for every $h\in[H]$ under
+the convention that $P_H$ is specified.
+
+Equations~\eqref{eq:ambient-functions}--\eqref{eq:clone-number} give
+\begin{equation}
+ \|P_{h,j}(s'\mid\cdot)\|_{\cH}\leq u
+ \qquad\text{for every }h\in\{1,2\},\ s'\in\cS.
+ \label{eq:coordinate-verified}
+\end{equation}
+When starting at $s_0$, the total probability of a good terminal state is
+\begin{equation}
+ \sum_{n\leq N_T}P_{1,j}(g_n\mid(s_0,a))
+ =\frac12+\Delta\psi_j(a).
+\end{equation}
+The episode's expected return is therefore
+$\alpha(1/2+\Delta\psi_j(a))$, whose optimum is
+$\alpha(1/2+\Delta)$.
+
+The flat instance $0$ replaces every $\psi_j$ by zero and uses the same $N_T$.
+Conditioned on ``good'' or ``bad'', the observed index $n$ is uniform on
+$[N_T]$ under every instance. Thus the label contains no information beyond the
+Bernoulli outcome.
+
+\subsection{Coupling and regret}
+
+Fix an arbitrary randomized history-dependent algorithm $\mathsf A$. Under the flat
+instance, let $A_t$ be its first-stage action in episode $t$. For each $j$, define
+\begin{equation}
+ \tau_j=\inf\{t\leq T:A_t\in\supp(\psi_j)\},
+\end{equation}
+with $\inf\varnothing=\infty$. For every realized trajectory of actions,
+\begin{equation}
+ \sum_{j=1}^{M}\mathbf 1\{\tau_j\leq T\}\leq T
+ \label{eq:path-hit-count}
+\end{equation}
+because the supports are disjoint. Taking expectations under the flat instance
+and dividing by $M=2T$ gives
+\begin{equation}
+ \frac1M\sum_{j=1}^M\Pr_0(\tau_j\leq T)\leq\frac12.
+ \label{eq:average-hit}
+\end{equation}
+
+For a fixed $j$, couple instance $j$ and the flat instance with the same algorithm
+randomness and the same random bits used to draw terminal outcomes. Before an
+action enters $\supp(\psi_j)$, the good probability is $1/2$ in both instances,
+and the conditional clone label is uniform in both. Their histories and next
+actions consequently agree until entry. Entry is determined by the action before
+the new outcome is observed. Therefore
+\begin{equation}
+ \Pr_j(\tau_j\leq T)=\Pr_0(\tau_j\leq T).
+ \label{eq:hitting-coupling}
+\end{equation}
+Equation~\eqref{eq:average-hit} supplies some $j^*$ with
+$\Pr_{j^*}(\tau_{j^*}>T)\geq1/2$. On this event every selected action has expected
+gap $\alpha\Delta$. The expected realized pseudo-regret equals the standard
+value regret by the tower property, so
+\begin{equation}
+ \E_{j^*}R_T
+ =\E_{j^*}\sum_{t=1}^T\alpha\Delta(1-\psi_{j^*}(A_t))
+ \geq\frac{\alpha\Delta}{2}T.
+ \label{eq:lower-complete}
+\end{equation}
+The argument already includes the algorithm's private randomness and proves the
+minimax claim with $c_\nu=\alpha\Delta/2$.
+
+Finally, every Gram matrix of $k$ is a Gram matrix of the ambient Mat\'ern kernel on
+$[0,1]^2$. Hence
+\begin{equation}
+ \gamma_T(k;1)\leq\gamma_T(\kappa_\nu;1)
+ =\widetilde O\!\left(T^{2/(2\nu+2)}\right)=o(T),
+\end{equation}
+using the standard Mat\'ern information-gain bound
+\citep{vakili2021information}. This completes the proof of
+Theorem~\ref{thm:linear}.
+
+\section{Proofs and separations for Bellman radii}
+\label{app:radius}
+
+\subsection{Proof of Theorem~\ref{thm:radius}}
+
+For any state $y$, take $V=\mathbf1_{\{y\}}$ in
+equation~\eqref{eq:radii}. This gives $\Crkhs\leq\Bpos$. The inclusion of the
+positive unit cube in the signed unit ball gives $\Bpos\leq\Bsgn$.
+For any $V$ with $\|V\|_\infty\leq1$, write $V=V_+-V_-$, where
+$0\leq V_+,V_-\leq1$. Then
+\begin{equation}
+ \|PV\|_{\cH}\leq\|PV_+\|_{\cH}+\|PV_-\|_{\cH}
+ \leq2\Bpos(P;\cH).
+\end{equation}
+For $0\leq V\leq1$ on a countable space, the triangle inequality gives
+\begin{equation}
+ \|PV\|_{\cH}
+ =\left\|\sum_yV(y)p_y\right\|_{\cH}
+ \leq\sum_yV(y)\|p_y\|_{\cH}
+ \leq\Vrkhs(P;\cH).
+\end{equation}
+Taking suprema proves equation~\eqref{eq:hierarchy}.
+
+For cloning, let
+$\bar V(y)=m_y^{-1}\sum_{i=1}^{m_y}\widetilde V(y,i)$. Direct substitution gives
+\begin{equation}
+ \widetilde P\widetilde V=P\bar V.
+ \label{eq:average-value}
+\end{equation}
+The average of a positive or signed unit-ball function is in the corresponding
+unit ball. Conversely, every original function has a constant-on-fibers lift.
+The suprema defining both radii are equal. Also
+\begin{equation}
+ \Vrkhs(\widetilde P;\widetilde\cH)
+ =\sum_y\sum_{i=1}^{m_y}\frac{\|p_y\|_{\cH}}{m_y}
+ =\Vrkhs(P;\cH).
+\end{equation}
+
+For an $\cH$-valued countably additive measure
+$\mathsf m(A)=P(A\mid\cdot)$, its semivariation on $\cS$ can be written
+\begin{equation}
+ \|\mathsf m\|_{\mathrm{sv}}(\cS)
+ =\sup_{\|V\|_\infty\leq1}
+ \left\|\int_{\cS}V\,d\mathsf m\right\|_{\cH}.
+\end{equation}
+This is exactly $\Bsgn$. On countable spaces, countable additivity in $\cH$ follows
+whenever the slice variation is finite. More generally, the identity applies
+whenever the transition set function is an $\cH$-valued vector measure. The
+definition of $\Bpos$ directly proves its minimal-constant claim.
+
+\subsection{No dimension-free reverse inequalities}
+
+First let the current domain contain one point and let its RKHS be $\R$ with the
+usual norm. A transition uniform on $n$ next states has
+\begin{equation}
+ \Crkhs=1/n,
+ \qquad \Bpos=\Bsgn=\Vrkhs=1.
+\end{equation}
+Thus $\Bpos/\Crkhs=n$.
+
+Second let the current domain be $[n]$ with the Kronecker kernel
+$k(i,j)=\mathbf1\{i=j\}$. Let the transition be deterministic, sending current
+point $i$ to next state $i$. Its coordinate vectors form the Euclidean basis, so
+\begin{equation}
+ \Crkhs=1,
+ \qquad \Bpos=\Bsgn=\sqrt n,
+ \qquad \Vrkhs=n.
+\end{equation}
+Hence both remaining gaps can diverge.
+
+\subsection{Proof of Proposition~\ref{prop:density}}
+
+For $0\leq V\leq1$, Bochner integrability and the triangle inequality imply
+\begin{align}
+ \|PV\|_{\cH}
+ &=\left\|\int_{\cS}V(s')p(s'\mid\cdot)\,d\mu(s')\right\|_{\cH}\\
+ &\leq\int_{\cS}V(s')\|p(s'\mid\cdot)\|_{\cH}\,d\mu(s')\\
+ &\leq\Vrkhs_\mu(P;\cH).
+\end{align}
+If the pointwise norm is at most $u$, the last expression is at most
+$u\mu(\cS)$.
+
+Suppose $d\mu'=w\,d\mu$ with $w>0$ almost everywhere. The transition density
+relative to $\mu'$ is $p'=p/w$, so
+\begin{equation}
+ \int\|p'(s'\mid\cdot)\|_{\cH}\,d\mu'(s')
+ =\int\frac{\|p(s'\mid\cdot)\|_{\cH}}{w(s')}w(s')\,d\mu(s')
+ =\Vrkhs_\mu(P;\cH).
+\end{equation}
+A measurable bijective relabeling gives the same identity by change of variables.
+
+\subsection{Proof of Corollary~\ref{cor:closure}}
+
+For $h=H$, the claim is immediate because $V=0$. If $h<H$ and
+$0\leq V\leq H-h$, then $V/(H-h)$ belongs to the positive unit ball. Therefore
+\begin{equation}
+ \|P_hV\|_{\cH}\leq(H-h)\Bpos(P_h;\cH).
+\end{equation}
+The triangle inequality after adding $r_h$ proves
+equation~\eqref{eq:closure}. Setting $r_h=0$ and taking a supremum over $V$ proves
+minimality.
+
+\section{Detailed proof-level literature audit}
+\label{app:audit}
+
+This appendix records the exact distinctions summarized in
+Table~\ref{tab:audit}. It is not a claim that every theorem in a cited paper fails.
+The issue is one implication used to instantiate a Bellman-image premise.
+
+\paragraph{Direct Bellman closure.}
+\citet[Assumption 4.1]{yang2020kernel} assumes that the Bellman operator maps every
+bounded action-value function into a fixed RKHS ball. Their main kernel theorem is
+stated under that assumption and is not affected. Immediately afterward, their
+equation (4.1) gives coordinate transition slices in the unit ball as a sufficient
+condition and asserts an $H+1$ target norm. Theorem~\ref{thm:radius} shows that this
+sufficiency statement needs a bound on $\Bpos$, slice variation, or state volume.
+
+\paragraph{The source of the volume term.}
+\citet[Assumption 2]{yeh2023sample} assumes a pointwise RKHS norm bound for the
+transition density. Their Lemma 3 proves
+\begin{equation}
+ \|PV\|_{\cH}\leq\frac{c}{1-\gamma},
+ \qquad c=\int_{\cS}ds',
+\end{equation}
+for discounted values bounded by $1/(1-\gamma)$. Their appendix proof displays the
+integral and the factor $c$. This agrees with Proposition~\ref{prop:density}. The
+lemma is valid when the density convention and finite $c$ are part of the model.
+
+This distinction also identifies a valid normalized special case.
+\citet[Lemma 2.3]{vakili2024rewardfree} states its value-function domain as
+$[0,1]^d$ and invokes the same density calculation. Under the stated Lebesgue
+unit-cube convention, $c=1$, so the displayed radius-$H$ conclusion retains the
+entire volume factor. An extension to other regular compact domains, as suggested
+later in that paper, must retain their volume or an invariant integrated bound.
+
+\paragraph{Dimension-free uses.}
+\citet[Assumption 1 and Lemma 1]{vakili2023kernel} assumes unit coordinate norms and
+calls membership of every $r_h+P_hV$ in the radius-$(H+1)$ ball an immediate
+consequence, citing the preceding lemma. The cited proof contains $c$. Thus the
+dimension-free consequence is not established on the paper's general state space.
+Theorem~\ref{thm:linear} applies directly to the transition-only Assumption 1 posed
+by \citet{vakili2024open}.
+
+\citet[Assumptions 2 and 4]{vakili2024average} separately assumes coordinate
+transition norms and optimistic closure for value functions in a state RKHS. In
+the proof of its Theorem 3, the required state-action RKHS bound
+$\|Pv\|_{\cH}=O(w)$ is then obtained from the coordinate premise by citing Yeh et
+al.'s Lemma 3. Because its state space is general, that step requires the omitted
+reference-volume or integrated-variation constant. The paper's self-contained
+confidence theorem is stated directly with a bound on $\|Pv\|_{\cH}$ and is not
+affected by this point.
+
+\citet[Assumption 1]{kayal2025rewardfree} likewise states
+$\|PV\|_{\cH}=O(H)$ and cites Yeh et al. The statement is correct only if the
+suppressed constant includes the reference volume or an integrated variation
+bound. The same distinction applies to the coordinate premise and imported KOVI
+bound in \citet{cioba2026invariances}, and to the arbitrary-policy $Q$-norm claim
+following equation (4) of \citet{pavlovic2026preferences}. These are recent
+preprints or applications with additional assumptions. We make no claim here about
+parts of their arguments that do not use the coordinate-to-Bellman step.
+
+\paragraph{Independent issues and invariant alternatives.}
+Appendix F of \citet{maran2024local} observes that a cover restricted to a current
+partition cell does not control values at unrestricted next states in
+\citet{vakili2023kernel}. That moving-target localization issue is independent of
+the coordinate-volume obstruction proved here. The smooth-Bellman assumptions and
+local linearity results of \citet{maran2024local,maran2024smooth} directly control
+Bellman images and survive cloning.
+
+\citet{chowdhury2023cme} assumes an operator-level conditional mean embedding that
+maps a chosen state RKHS into the state-action RKHS, together with closure of the
+algorithm's optimistic value class. Such operator assumptions are invariant under
+consistent pullbacks. They are not identical to $\Bpos$, since their domain is a
+specified state RKHS rather than all bounded functions. The measure-theoretic CME
+literature carefully distinguishes these representability conditions
+\citep{park2020measure,hertel2026regularity}.
+
+The 2025 OpenReview preprint of \citet{kumar2025closure} also assumes a bounded
+conditional mean embedding and projects optimistic proxies into a chosen state-RKHS
+ball. This is a recent algorithmic use of the invariant operator route. It neither
+derives Bellman closure from coordinate transition slices nor studies state cloning,
+so its contribution is complementary to ours.
+
+\section{Verification artifact}
+\label{app:checks}
+
+The file \texttt{audit\_cloning.py} performs four independent finite checks.
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
+ \item It samples a transition matrix on a finite current domain, computes exact
+ finite-RKHS coordinate norms, and verifies their prescribed clone scaling.
+ \item It enumerates the vertices of the positive and signed value cubes to compute
+ both Bellman radii. It verifies that they are unchanged after nonuniform cloning.
+ \item It verifies invariance of slice variation and equality of original and
+ pulled-back information gains for many point sequences.
+ \item It exhaustively checks the support-count inequality
+ \eqref{eq:path-hit-count} for every length-four sequence over eight supports and
+ verifies the resulting one-half no-hit fraction.
+\end{enumerate}
+All comparisons use a tolerance of $10^{-10}$. These checks are not substitutes for
+the proofs. They guard against indexing, scaling, and inequality-direction errors.
